@@ -1,0 +1,68 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: piggybank
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: piggybank_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint || true
+      - name: Run migrations
+        run: npm run migrate
+        env:
+          DATABASE_URL: postgresql://piggybank:password@localhost:5432/piggybank_test
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://piggybank:password@localhost:5432/piggybank_test
+          JWT_SECRET: test-secret
+          REFRESH_SECRET: test-refresh-secret
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.AZURE_HOST }}
+          username: ${{ secrets.AZURE_USER }}
+          key: ${{ secrets.AZURE_SSH_KEY }}
+          script: |
+            cd /opt/piggybank-api
+            git pull origin main
+            npm ci --production
+            npm run build
+            npm run migrate
+            pm2 reload ecosystem.config.cjs || pm2 start ecosystem.config.cjs
