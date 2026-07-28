@@ -1,7 +1,14 @@
-import type { FastifyPluginAsync } from 'fastify';
+import { FastifyInstance } from 'fastify';
+import { authMiddleware } from '../middleware/auth.js';
+import * as walletService from '../services/wallet.service.js';
 
-const walletsRoutes: FastifyPluginAsync = async (app) => {
-  // TODO: implement wallets routes
-};
+export async function walletRoutes(app: FastifyInstance): Promise<void> {
+  app.addHook('preHandler', authMiddleware);
 
-export { walletsRoutes };
+  app.get('/:id', async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const wallet = await walletService.getWallet(id);
+    if (!wallet) return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Wallet not found' } });
+    return wallet;
+  });
+}
