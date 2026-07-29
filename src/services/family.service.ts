@@ -15,7 +15,7 @@ export async function createFamily(name: string, currency: string, createdBy: st
       [family.id, createdBy]
     );
 
-    await seedFamilyCategories(family.id);
+    await seedFamilyCategories(family.id, client);
 
     return family;
   });

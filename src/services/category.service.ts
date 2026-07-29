@@ -1,5 +1,6 @@
 import { db } from '../db/client.js';
 import { SpendingCategory } from '../types/index.js';
+import type pg from 'pg';
 
 const SYSTEM_CATEGORIES = [
   { name: 'Savings', emoji: '💰' },
@@ -23,14 +24,16 @@ const DEFAULT_CUSTOM_CATEGORIES = [
   { name: 'Other', emoji: '🔧' },
 ];
 
-export async function seedFamilyCategories(familyId: string): Promise<void> {
+export async function seedFamilyCategories(familyId: string, client?: pg.PoolClient): Promise<void> {
   const allCategories = [
     ...SYSTEM_CATEGORIES.map(c => ({ ...c, is_system: true })),
     ...DEFAULT_CUSTOM_CATEGORIES.map(c => ({ ...c, is_system: false })),
   ];
 
+  const queryFn = client ? client.query.bind(client) : db.query;
+
   for (const cat of allCategories) {
-    await db.query(
+    await queryFn(
       `INSERT INTO spending_categories (family_id, name, emoji, is_system)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT DO NOTHING`,

@@ -2,7 +2,6 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { config } from './config.js';
 import { db } from './db/client.js';
-import './startup.js'; // Run migrations + seed on startup
 import { authRoutes } from './routes/auth.js';
 import { familyRoutes } from './routes/families.js';
 import { walletRoutes } from './routes/wallets.js';

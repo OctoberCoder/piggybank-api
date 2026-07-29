@@ -7,6 +7,10 @@ import * as childService from '../services/child.service.js';
 export async function familyRoutes(app: FastifyInstance): Promise<void> {
   app.addHook('preHandler', authMiddleware);
 
+  app.get('/', async (request) => {
+    return familyService.getFamiliesForUser((request as any).userId!);
+  });
+
   app.post('/', async (request, reply) => {
     const { name, currency } = request.body as { name: string; currency?: string };
     const family = await familyService.createFamily(name, currency || 'NGN', (request as any).userId!);
