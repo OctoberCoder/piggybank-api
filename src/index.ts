@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { config } from './config.js';
 import { db } from './db/client.js';
+import './startup.js'; // Run migrations + seed on startup
 import { authRoutes } from './routes/auth.js';
 import { familyRoutes } from './routes/families.js';
 import { walletRoutes } from './routes/wallets.js';
@@ -15,6 +16,7 @@ import { lessonRoutes } from './routes/lessons.js';
 import { insightRoutes } from './routes/insights.js';
 import { notificationRoutes } from './routes/notifications.js';
 import { backupRoutes } from './routes/backup.js';
+import { seedRoutes } from './routes/seed.js';
 import { errorHandler } from './middleware/error-handler.js';
 
 const app = Fastify({ logger: true });
@@ -36,6 +38,7 @@ await app.register(lessonRoutes, { prefix: '/families' });
 await app.register(insightRoutes, { prefix: '/wallets' });
 await app.register(notificationRoutes, { prefix: '/notifications' });
 await app.register(backupRoutes, { prefix: '/families' });
+await app.register(seedRoutes);
 
 app.setErrorHandler(errorHandler);
 
